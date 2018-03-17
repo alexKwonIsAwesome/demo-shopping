@@ -45,6 +45,7 @@ var UserSchema = new Schema({
     }]
 });
 
+// Defining Model Instance method => access .methods
 // overriding toJSON();
 UserSchema.methods.toJSON = function () {
     var user = this;
@@ -54,14 +55,36 @@ UserSchema.methods.toJSON = function () {
 }
 
 UserSchema.methods.generateAuthToken = async function () {
-    var user = this;
-    var access = 'auth';
-    var token = jwt.sign({ _id: user._id.toHexString(), access }, 'abc123').toString();
-
-    user.tokens = user.tokens.concat([{ access, token }]);
-    await user.save();
-    return token;
+    try {
+        var user = this;
+        var access = 'auth';
+        var token = jwt.sign({ _id: user._id.toHexString(), access }, 'abc123').toString();
+    
+        user.tokens = user.tokens.concat([{ access, token }]);
+        await user.save();
+        return token;
+    } catch (e) {
+        return e;
+    }
 };
+
+// Defining Model method => access .statics
+UserSchema.statics.findByToken = async function (token) {
+    try {
+        var User = this;
+        var decoded;
+    
+        decoded = jwt.verify(token, 'abc123');
+
+        return User.findOne({
+            '_id': decoded._id,
+            'tokens.token': token,
+            'tokens.access': 'auth' 
+        })
+    } catch (e) {
+        return Promise.reject();
+    }
+}
 
 var User = mongoose.model('User', UserSchema);
 
