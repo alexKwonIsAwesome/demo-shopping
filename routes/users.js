@@ -5,7 +5,7 @@ const _ = require('lodash');
 const { User } = require('./../models/user');
 const { authenticate } = require('./../middleware/authenticate');
 
-// POST users
+// POST users sign up
 router.post('/', async (req, res) => {
     try {
         const body = _.pick(req.body, ['email', 'password']);
@@ -17,6 +17,23 @@ router.post('/', async (req, res) => {
         res.status(400).send(e);
     }
 });
+
+// POST usres sign in
+router.post('/signin', async (req, res) => {
+    try {
+        const body = _.pick(req.body, ['email', 'password']);
+        const user = await User.findByCredentials(body.email, body.password);
+
+        const token = await user.generateAuthToken();
+        res.header('x-auth', token).send(user);
+    } catch (e) {
+        if (e.message === 404) {
+            res.status(404).send(e);
+        } else {
+            res.status(400).send(e);
+        }
+    }
+})
 
 router.get('/me', authenticate, async (req, res) => {
     try {

@@ -87,6 +87,31 @@ UserSchema.statics.findByToken = async function (token) {
     }
 }
 
+
+UserSchema.statics.findByCredentials = async function (email, password) {
+    try {
+        var User = this;
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            throw new Error(404);
+        }
+
+        return new Promise((resolve, reject) => {
+            bcrypt.compare(password, user.password, (err, res) => {
+                if (res) {
+                    resolve(user);
+                } else {
+                    reject(401);
+                }
+            });
+        });
+
+    } catch (e) {
+        throw new Error(e);
+    }
+}
+
 UserSchema.pre('save', function (next) {
     var user = this;
 
